@@ -1,14 +1,46 @@
+#!/usr/bin/env node
+
 const fs = require('fs');
+const path = require('path');
 const { execSync } = require('child_process');
+
+// Define the new config directory
+const configDir = path.join(process.env.HOME || process.env.USERPROFILE, '.config', 'notion-api-examples');
+const configTmpDir = path.join(configDir, 'tmp');
+
+console.log(configDir);
+console.log(configTmpDir);
+
+// Ensure the config directories exist
+if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+}
+if (!fs.existsSync(configTmpDir)) {
+    fs.mkdirSync(configTmpDir, { recursive: true });
+}
+
 const fieldsWherePrevStaffNeedsToBeRemoved = ["To do","Acknowledged", "Mi nuh need dis"];
+
+function executeNotionCli(command, pageId, changeDir = true) {
+    if (changeDir) {
+        const currentDir = process.cwd();
+        process.chdir(configTmpDir);
+        try {
+            return execSync(`notion-cli ${command} ${pageId}`, { encoding: 'utf-8' });
+        } finally {
+            process.chdir(currentDir);
+        }
+    } else {
+        return execSync(`notion-cli ${command} ${pageId}`, { encoding: 'utf-8' });
+    }
+}
 
 function getData(pageId) {
     // Read the JSON file
 
-    const rawData = execSync(`notion-cli page ${pageId}`, { encoding: 'utf-8' });
+    const rawData = executeNotionCli('page', pageId);
     const data = JSON.parse(rawData);
-    fs.writeFileSync('page.json', rawData);
-
+    fs.writeFileSync(path.join(configTmpDir, 'page.json'), rawData);
 
     // Function to extract all properties of type 'people'
     function extractPeopleProperties(result) {
@@ -37,7 +69,7 @@ function getData(pageId) {
         console.log(JSON.stringify(extractedData, null, 2));
 
         // Optionally, write to a file
-        fs.writeFileSync('data/tmp/extracted_people.json', JSON.stringify(extractedData, null, 2));
+        fs.writeFileSync(path.join(configTmpDir, 'extracted_people.json'), JSON.stringify(extractedData, null, 2));
         return extractedData;
     } else {
         console.log("No properties of type 'people' found.");
@@ -99,7 +131,7 @@ function updateData(data, currentIds, ignoreIds) {
     console.log(JSON.stringify(data, null, 2));
 
     // Optionally, write to a file
-    fs.writeFileSync('data/tmp/updated_people.json', JSON.stringify(data, null, 2));
+    fs.writeFileSync(path.join(configTmpDir, 'updated_people.json'), JSON.stringify(data, null, 2));
     return data;
 }
 
@@ -108,9 +140,9 @@ function adjustUsers(pageId) {
     let currentEmailsObj;
     let currentEmailsObj2;
     try {
-        const rawData = fs.readFileSync('data/users.json', 'utf8');
+        const rawData = fs.readFileSync(path.join(configDir, 'users.json'), 'utf8');
         currentEmailsObj = JSON.parse(rawData);
-        const rawData2 = fs.readFileSync('data/users-ignore.json', 'utf8');
+        const rawData2 = fs.readFileSync(path.join(configDir, 'users-ignore.json'), 'utf8');
         currentEmailsObj2 = JSON.parse(rawData2);
     } catch (error) {
         console.error("Error reading users.json:", error);
@@ -124,10 +156,10 @@ function adjustUsers(pageId) {
     if (extractedData) {
         const updatedData = updateData(extractedData, currentIds, ignoreIds);
         // Save updatedData to file:
-        fs.writeFileSync('data/tmp/updated_data.json', JSON.stringify(updatedData.properties, null, 2));
+        fs.writeFileSync(path.join(configTmpDir, 'updated_data.json'), JSON.stringify(updatedData.properties, null, 2));
         console.log('Updated data saved to updated_data.json');
 
-        const newData = execSync(`notion-cli update --data data/tmp/updated_data.json ${pageId}`, { encoding: 'utf-8' });
+        executeNotionCli('update --data updated_data.json', pageId);
     }
 }
 // Read page IDs from command line arguments
