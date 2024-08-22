@@ -1,0 +1,23 @@
+{
+  "name": "notion-api-examples",
+  "version": "0.0.1",
+  "description": "",
+  "main": "review.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "npm install && npm install -g notion-cli && npm link"
+  },
+  "bin": {
+    "notion-skills-user-review": "./user-review.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenDevEd/notion-api-examples.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/OpenDevEd/notion-api-examples/issues"
+  },
+  "homepage": "https://github.com/OpenDevEd/notion-api-examples#readme"
+}
