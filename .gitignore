@@ -1,4 +1,10 @@
 # Logs
+
+previous
+BaCkUp
+OBSOLETE
+data
+
 logs
 *.log
 npm-debug.log*
